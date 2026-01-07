@@ -1,14 +1,20 @@
 package com.example.JournalApp.controller;
 
+import com.example.JournalApp.entity.JournalEntry;
 import com.example.JournalApp.entity.User;
+import com.example.JournalApp.repository.JournalEntryRepository;
 import com.example.JournalApp.repository.UserRepository;
+import com.example.JournalApp.service.JournalEntryService;
 import com.example.JournalApp.service.UserService;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Optional;
 
 @RestController
@@ -21,39 +27,36 @@ public class UserController {
     @Autowired
     private UserRepository userRepository;
 
-    @PostMapping("/create")
-    public ResponseEntity<?> createUser(@RequestBody User user)
-    {
-        userService.saveUser(user);
-        return new ResponseEntity<>(HttpStatus.OK);
-    }
-//
+    @Autowired
+    private JournalEntryRepository journalEntryRepository;
+
 //    @GetMapping("/getById/{id}")
 //    public ResponseEntity<?> getUserById(@PathVariable ObjectId id) {
 //        User user =   userService.findById(id).orElseThrow(null);
 //        return new ResponseEntity<>(user,HttpStatus.NO_CONTENT);
 //    }
 
-    @PutMapping("updateById/{id}")
-    public ResponseEntity<?> updateUser(@PathVariable ObjectId id ,@RequestBody User user) {
+    @PutMapping("updateUser")
+    public ResponseEntity<?> updateUser(@RequestBody User user) {
 
-        Optional<User> optionalUser= userService.findById(id);
-       if(optionalUser.isPresent())
-       {
-            User user1 = optionalUser.get();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userName = authentication.getName();
+        User user1 = userService.findByUserName(userName);
+
             user1.setUserName(user.getUserName());
-            user1.setEmail(user.getEmail());
             user1.setPassword(user.getPassword());
-           userService.saveUser(user1);
-       }
+           userService.savedUser(user1);
+
        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
-    @DeleteMapping("/deleteById/{id}")
-    public ResponseEntity<?> deleteUserById(@PathVariable ObjectId id) {
-        userService.deleteById(id);
+    @DeleteMapping("/deleteUser")
+    public ResponseEntity<?> deleteUserById() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userName = authentication.getName();
+        User byUserName = userRepository.findByUserName(userName);
+        userRepository.deleteByUserName(userName);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
-
 
 }
